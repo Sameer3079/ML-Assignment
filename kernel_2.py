@@ -9,9 +9,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 df = pd.read_csv("./data/adult.csv")
-df.head()
 
-df.dtypes
+print("DF Types =", df.dtypes)
 
 df.isnull().sum()
 
@@ -25,21 +24,20 @@ df.head()
 df = df.dropna()
 df.head()
 
-df['income'] = df['income'].map({'<=50K':0, '>50K':1})
+df['income'] = df['income'].map({'<=50K': 0, '>50K': 1})
 df.income.head()
 
 numerical_df = df.select_dtypes(exclude=['object'])
 numerical_df.columns
 
-
 plt.hist(df['age'], edgecolor='black')
 plt.title('Age Histogram')
 plt.axvline(np.mean(df['age']), color='yellow', label='average age')
 plt.legend()
-plt.show()
+# plt.show()
 
-age50k = df[df['income']==1].age
-agel50k = df[df['income']==0].age
+age50k = df[df['income'] == 1].age
+agel50k = df[df['income'] == 0].age
 
 fig, axs = plt.subplots(2, 1)
 
@@ -58,9 +56,8 @@ plt.tight_layout()
 
 df['marital.status'] = df['marital.status'].replace(['Widowed', 'Divorced', 'Separated', 'Never-married'], 'single')
 
-df['marital.status'] = df['marital.status'].replace(['Married-spouse-absent', 'Married-civ-spouse', 'Married-AF-spouse'], 'married')
-
-
+df['marital.status'] = df['marital.status'].replace(
+    ['Married-spouse-absent', 'Married-civ-spouse', 'Married-AF-spouse'], 'married')
 
 categorical_df = df.select_dtypes(include=['object'])
 categorical_df.columns
@@ -83,17 +80,15 @@ sns.catplot(data=df, x='education', y='hours.per.week', hue='income', kind='poin
 
 sns.FacetGrid(data=df, hue='income', height=6).map(plt.scatter, 'age', 'hours.per.week').add_legend()
 
-plt.figure(figsize=(15,12))
-plt.show()
+plt.figure(figsize=(15, 12))
+# plt.show()
 cor_map = df.corr()
 sns.heatmap(cor_map, annot=True, fmt='.3f', cmap='YlGnBu')
-
 
 X = df.drop('income', axis=1)
 y = df['income']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=24)
-
 
 clf = RandomForestClassifier(n_estimators=100, random_state=24)
 clf.fit(X_train, y_train)
@@ -101,7 +96,6 @@ clf.fit(X_train, y_train)
 y_pred = clf.predict(X_test)
 
 print("Random Forests accuracy", accuracy_score(y_test, y_pred))
-
 
 decision_tree = DecisionTreeClassifier(criterion='gini', random_state=21, max_depth=10)
 

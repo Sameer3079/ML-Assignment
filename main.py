@@ -1,108 +1,46 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
 
-# Importing Data
-data = pd.read_csv("./data/adult.data")
+# Load the data set
+df = pd.read_csv("./data/adult.csv")
 
-data.count()
+# Replace unknown values with null
+df = df.replace('?', np.NaN)
 
+# Drop samples which contain Nan data
+df = df.dropna()
 
-# Import Data Set
-def import_data():
-    balance_data = pd.read_csv('./data/balance-scale.data', sep=',', header=None)
+# Map the results of the samples to numerical values
+df['income'] = df['income'].map({'<=50K': 0, '>50K': 1})
 
-    # Printing the data set shape
-    print("Data Set Length: ", len(balance_data))
-    print("Data Set Shape: ", balance_data.shape)
+# Compressing unnecessary data variations
+df['marital.status'] = df['marital.status'].replace(['Widowed', 'Divorced', 'Separated', 'Never-married'], 'single')
 
-    # Printing the data set observations
-    print("Data Set: ", balance_data.head())
-    return balance_data
+df['marital.status'] = df['marital.status'].replace(
+    ['Married-spouse-absent', 'Married-civ-spouse', 'Married-AF-spouse'], 'married')
 
+# Objects are mapped to numerical values
+categorical_df = df.select_dtypes(include=['object'])
 
-# Function to split the data set
-def split_data_set(balance_data):
-    # Separating the target variable
-    X = balance_data.values[:, 1:5]
-    Y = balance_data.values[:, 0]
+enc = LabelEncoder()
 
-    # Splitting the data set into train and test
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, Y, test_size=0.3, random_state=100)
+categorical_df = categorical_df.apply(enc.fit_transform)
 
-    return X, Y, X_train, X_test, y_train, y_test
+df = df.drop(categorical_df.columns, axis=1)
+df = pd.concat([df, categorical_df], axis=1)
 
+X = df.drop('income', axis=1)
+y = df['income']
 
-# Function to perform training with giniIndex.
-def train_using_gini(X_train, X_test, y_train):
-    # Creating the classifier object
-    clf_gini = DecisionTreeClassifier(criterion="gini",
-                                      random_state=100, max_depth=3, min_samples_leaf=5)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=24)
 
-    # Performing training
-    clf_gini.fit(X_train, y_train)
-    return clf_gini
+clf = RandomForestClassifier(n_estimators=100, random_state=24)
+clf.fit(X_train, y_train)
 
+y_pred = clf.predict(X_test)
 
-# Function to perform training with entropy.
-def train_using_entropy(X_train, X_test, y_train):
-    # Decision tree with entropy
-    clf_entropy = DecisionTreeClassifier(
-        criterion="entropy", random_state=100,
-        max_depth=3, min_samples_leaf=5)
-
-    # Performing training
-    clf_entropy.fit(X_train, y_train)
-    return clf_entropy
-
-
-# Function to make predictions
-def prediction(X_test, clf_object):
-    # Prediction on test with giniIndex
-    y_pred = clf_object.predict(X_test)
-    print("Predicted values:")
-    print(y_pred)
-    return y_pred
-
-
-# Function to calculate accuracy
-def cal_accuracy(y_test, y_pred):
-    print("Confusion Matrix: ",
-          confusion_matrix(y_test, y_pred))
-
-    print("Accuracy : ",
-          accuracy_score(y_test, y_pred) * 100)
-
-    print("Report : ",
-          classification_report(y_test, y_pred))
-
-
-# Driver code
-def main():
-    # Building Phase
-    data = import_data()
-    X, Y, X_train, X_test, y_train, y_test = split_data_set(data)
-    clf_gini = train_using_gini(X_train, X_test, y_train)
-    clf_entropy = train_using_entropy(X_train, X_test, y_train)
-
-    # Operational Phase
-    print("Results Using Gini Index:")
-
-    # Prediction using gini
-    y_pred_gini = prediction(X_test, clf_gini)
-    cal_accuracy(y_test, y_pred_gini)
-
-    print("Results Using Entropy:")
-    # Prediction using entropy
-    y_pred_entropy = prediction(X_test, clf_entropy)
-    cal_accuracy(y_test, y_pred_entropy)
-
-
-# Calling main function
-if __name__ == "__main__":
-    main()
+print("Random Forests accuracy", accuracy_score(y_test, y_pred))
