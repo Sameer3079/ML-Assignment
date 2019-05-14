@@ -26,6 +26,7 @@ df['marital.status'] = df['marital.status'].replace(
 # Objects are mapped to numerical values
 categorical_df = df.select_dtypes(include=['object'])
 
+# Load the label encoder
 enc = LabelEncoder()
 
 categorical_df = categorical_df.apply(enc.fit_transform)
@@ -33,14 +34,19 @@ categorical_df = categorical_df.apply(enc.fit_transform)
 df = df.drop(categorical_df.columns, axis=1)
 df = pd.concat([df, categorical_df], axis=1)
 
+# Separate inputs and outputs in the data set
 X = df.drop('income', axis=1)
 y = df['income']
 
+# Split the data set into training data set and testing data set
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=24)
 
 clf = RandomForestClassifier(n_estimators=100, random_state=24)
 clf.fit(X_train, y_train)
 
+# Get predictions for the test input data
 y_pred = clf.predict(X_test)
 
-print("Random Forests accuracy", accuracy_score(y_test, y_pred))
+accuracy = accuracy_score(y_test, y_pred)
+
+print("Random Forests accuracy", accuracy * 100)
